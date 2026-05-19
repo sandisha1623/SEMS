@@ -1,0 +1,91 @@
+// ===== LAYOUT =====
+$layout-bg: #f8f9fc;
+$content-bg: #ffffff;
+
+// ===== SIDEBAR =====
+$sidebar-width: 250px;
+$sidebar-bg: #ffffff;
+$sidebar-color: #6c757d;
+
+$sidebar-item: #6c757d;
+$sidebar-item-hover: $primary;
+$sidebar-item-active: #ffffff;
+
+$sidebar-item-bg-hover: rgba($primary, 0.08);
+$sidebar-item-bg-active: $primary;
+
+$sidebar-border-color: #e3e6f0;
+
+$sidebar-icon-color: #adb5bd;
+$sidebar-icon-hover: $primary;
+$sidebar-icon-active: #ffffff;
+
+// ===== TOPBAR =====
+$topbar-height: 60px;
+$topbar-bg: #ffffff;
+$topbar-border: #e3e6f0;
+
+$topbar-item-color: #6c757d;
+$topbar-item-hover: $primary;
+
+// ===== CARD =====
+$card-bg: #ffffff;
+$card-border: #e3e6f0;
+$card-radius: 0.5rem;
+
+$card-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+
+// ===== BUTTON =====
+$btn-radius: 0.375rem;
+$btn-padding-y: 0.375rem;
+$btn-padding-x: 0.75rem;
+
+// ===== INPUT =====
+$input-bg: #ffffff;
+$input-border: #ced4da;
+$input-focus-border: $primary;
+$input-radius: 0.375rem;
+
+// ===== TABLE =====
+$table-border-color: #e3e6f0;
+$table-hover-bg: rgba(0,0,0,0.02);
+
+// ===== BADGE =====
+$badge-padding-y: 0.35em;
+$badge-padding-x: 0.65em;
+$badge-font-size: 75%;
+
+// ===== MODAL =====
+$modal-bg: #ffffff;
+$modal-radius: 0.5rem;
+
+// ===== DROPDOWN =====
+$dropdown-bg: #ffffff;
+$dropdown-border: #e3e6f0;
+$dropdown-hover-bg: rgba(0,0,0,0.03);
+
+// ===== ALERT =====
+$alert-border-radius: 0.375rem;
+
+// ===== PROGRESS =====
+$progress-bg: #e9ecef;
+
+// ===== TYPOGRAPHY =====
+$heading-color: #343a40;
+$text-muted: #6c757d;
+
+// ===== BORDER =====
+$border-color: #e3e6f0;
+
+// ===== SHADOW =====
+$shadow-sm: 0 .125rem .25rem rgba(0,0,0,.075);
+$shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+
+// ===== TRANSITION =====
+$transition-base: all 0.3s ease;
+
+// ===== Z-INDEX =====
+$zindex-sidebar: 1000;
+$zindex-topbar: 1010;
+$zindex-dropdown: 1050;
+$zindex-modal: 1100;
