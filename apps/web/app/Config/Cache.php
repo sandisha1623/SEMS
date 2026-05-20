@@ -125,7 +125,7 @@ class Cache extends BaseConfig
      */
     public array $redis = [
         'host'       => '127.0.0.1',
-        'password'   => null,
+        'password'   => '',
         'port'       => 6379,
         'timeout'    => 0,
         'async'      => false, // specific to Predis and ignored by the native Redis extension

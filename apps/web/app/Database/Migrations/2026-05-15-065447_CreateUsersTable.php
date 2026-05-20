@@ -17,9 +17,10 @@ class CreateUsersTable extends Migration
                 'auto_increment' => true,
             ],
 
-            'uuid' => [
+            'public_id' => [
                 'type'       => 'CHAR',
-                'constraint' => 36,
+                'constraint' => 30,
+                'comment'    => 'usr_<ULID> — eksposable di URL/API',
             ],
 
             'username' => [
@@ -76,11 +77,16 @@ class CreateUsersTable extends Migration
                 'null' => true,
             ],
 
+            'deleted_at' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
+
         ]);
 
         $this->forge->addKey('id', true);
 
-        $this->forge->addUniqueKey('uuid');
+        $this->forge->addUniqueKey('public_id');
         $this->forge->addUniqueKey('username');
         $this->forge->addUniqueKey('email');
 

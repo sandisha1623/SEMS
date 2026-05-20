@@ -1,153 +1,92 @@
 import asyncio
 import json
-import jwt
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+
+from app.config import REDIS_CHANNEL
+from app.auth import verify_token
 from app.connection_manager import manager
 from app.redis_client import redis_client
 
-app = FastAPI()
 
-SECRET_KEY = "91b776cad183181cc111f53b37f27b19d33a76aa059fe4684751b30de023b5ae"
-ALGORITHM = "HS256"
+app = FastAPI(title="SEMS Realtime")
 
 
-# ─────────────────────────────
+# ─────────────────────────────────────────────
 # WEBSOCKET ENDPOINT
-# ─────────────────────────────
+# ─────────────────────────────────────────────
 @app.websocket("/ws")
-async def websocket_endpoint(
-    websocket: WebSocket
-):
+async def websocket_endpoint(websocket: WebSocket):
+    token   = websocket.query_params.get("token")
+    payload = verify_token(token)
 
-    token = websocket.query_params.get("token")
-
-    print("TOKEN:", token)
-
-    user_id = decode_token_get_user_id(token)
-
-    print("USER ID:", user_id)
-
-    # VALIDASI
-    if not user_id:
-
-        print("INVALID TOKEN")
-
-        await websocket.close()
-
+    if not payload:
+        # 1008 = policy violation (RFC 6455). Klien tahu auth gagal.
+        await websocket.close(code=1008)
         return
 
-    await manager.connect(
-        str(user_id), 
-        websocket
-    )
+    user_id  = str(payload["uid"])
+    username = payload.get("username", "")
+    role     = payload.get("role", "")
+
+    await manager.connect(user_id, websocket)
+    print(f"[ws] connected user={user_id} ({username}, {role})")
 
     try:
-
         while True:
-
             data = await websocket.receive_text()
 
-            print("WS MESSAGE:", data)
-
             if data == "ping":
-
-                manager.heartbeat(
-                    str(user_id)
-                )
-
+                manager.heartbeat(user_id)
                 await websocket.send_text("pong")
+                continue
 
-            else:
-
-                await websocket.send_text(
-                    f"Echo: {data}"
-                )
+            # echo untuk debug; client biasanya hanya menerima push
+            await websocket.send_json({
+                "type": "echo",
+                "data": data,
+            })
 
     except WebSocketDisconnect:
-
         manager.disconnect(user_id, websocket)
-
-        print(
-            "DISCONNECTED:",
-            user_id
-        )
+        print(f"[ws] disconnected user={user_id}")
 
 
-# ─────────────────────────────
-# REDIS SUBSCRIBER (EVENT BUS)
-# ─────────────────────────────
+# ─────────────────────────────────────────────
+# REDIS SUBSCRIBER — bridge dari CI4 publish ke WS
+# ─────────────────────────────────────────────
 async def redis_subscriber():
-
     pubsub = redis_client.pubsub()
-    pubsub.subscribe("sems_events")
-
-    print("Subscribed: sems_events")
+    pubsub.subscribe(REDIS_CHANNEL)
+    print(f"[redis] subscribed: {REDIS_CHANNEL}")
 
     while True:
+        message = pubsub.get_message(ignore_subscribe_messages=True)
 
-        message = pubsub.get_message(
-            ignore_subscribe_messages=True
-        )
-
-        if message:
-
+        if message and message.get("type") == "message":
             try:
+                data         = json.loads(message["data"])
+                target_user  = data.get("user_id")
 
-                data = json.loads(message["data"])
-
-                user_id = data.get("user_id")
-
-                await manager.send_to_user(
-                    user_id,
-                    data
-                )
+                if target_user:
+                    await manager.send_to_user(str(target_user), data)
+                else:
+                    await manager.broadcast(data)
 
             except Exception as e:
-
-                print("Redis event error:", e)
+                print("[redis] event error:", e)
 
         await asyncio.sleep(0.1)
 
 
-# ─────────────────────────────
-# STARTUP
-# ─────────────────────────────
+# ─────────────────────────────────────────────
+# STARTUP / HEALTH
+# ─────────────────────────────────────────────
 @app.on_event("startup")
-async def startup():
-
+async def on_startup():
     asyncio.create_task(redis_subscriber())
 
 
-# ─────────────────────────────
-# HEALTH CHECK
-# ─────────────────────────────
 @app.get("/")
 def health():
-
-    return {
-        "status": "ok",
-        "realtime": "active"
-    }
-
-def decode_token_get_user_id(token):
-
-    try:
-
-        payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
-
-        print("PAYLOAD:", payload)
-
-        return str(
-            payload["uid"]
-        )
-
-    except Exception as e:
-
-        print("JWT ERROR:", e)
-
-        return None
+    return {"status": "ok", "service": "sems-realtime"}

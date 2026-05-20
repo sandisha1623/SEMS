@@ -2,38 +2,41 @@
 
 namespace App\Database\Seeds;
 
+use App\Libraries\Ulid;
 use CodeIgniter\Database\Seeder;
 
 class PermissionSeeder extends Seeder
 {
     public function run()
     {
-        $permissions = [
+        $keys = [
+            'dashboard.view',
+            'analytics.view',
+            'analytics.export',
+            'detection.view',
+            'detection.validate',
+            'detection.reject',
+            'cctv.live',
+            'cctv.replay',
+            'report.generate',
+            'report.download',
+            'users.manage',
+            'roles.manage',
+            'settings.manage',
+            'ai.manage',
 
-            ['permission_key' => 'dashboard.view'],
-            ['permission_key' => 'analytics.view'],
-            ['permission_key' => 'analytics.export'],
-
-            ['permission_key' => 'detection.view'],
-            ['permission_key' => 'detection.validate'],
-            ['permission_key' => 'detection.reject'],
-
-            ['permission_key' => 'cctv.live'],
-            ['permission_key' => 'cctv.replay'],
-
-            ['permission_key' => 'report.generate'],
-            ['permission_key' => 'report.download'],
-
-            ['permission_key' => 'users.manage'],
-            ['permission_key' => 'roles.manage'],
-            ['permission_key' => 'settings.manage'],
-
-            ['permission_key' => 'ai.manage'],
-
+            // Permissions untuk exam domain (Phase 1 SEMS)
+            'exam.manage',       // CRUD exam sessions (admin)
+            'exam.participate',  // Ikut ujian (mahasiswa)
+            'exam.monitor',      // Awasi ujian live (pengawas)
+            'exam.review',       // Review violation & evidence
         ];
 
-        $this->db
-            ->table('permissions')
-            ->insertBatch($permissions);
+        $rows = array_map(static fn (string $key): array => [
+            'public_id'      => Ulid::generateWithPrefix('prm'),
+            'permission_key' => $key,
+        ], $keys);
+
+        $this->db->table('permissions')->insertBatch($rows);
     }
 }

@@ -1,83 +1,147 @@
-'use strict';
+/**
+ * SEMS — Login Form Handler
+ *
+ * - Submits via fetch (AJAX), shows spinner & alerts
+ * - Token disimpan oleh server di httpOnly cookie (sems_access_token)
+ *   → tidak pernah disentuh JS, tidak pakai localStorage / sessionStorage
+ * - Refresh CSRF hash setiap response (karena Config\Security::$regenerate = true)
+ * - Body dikirim sebagai application/x-www-form-urlencoded supaya PHP
+ *   $_POST otomatis terisi (FormData/multipart kadang bermasalah)
+ */
+(() => {
+    'use strict';
 
-(function () {
-
-    const form = document.getElementById('loginForm');
-    const button = document.getElementById('loginBtn');
-    const spinner = document.getElementById('loginSpinner');
+    const form     = document.getElementById('loginForm');
     const alertBox = document.getElementById('alertBox');
-    const btnText = document.querySelector('.btn-text');
+    const loginBtn = document.getElementById('loginBtn');
+    const spinner  = document.getElementById('loginSpinner');
+    const btnText  = loginBtn.querySelector('.btn-text');
 
-    if (!form || !button || !spinner || !alertBox || !btnText) {
-        console.error('Login form: required elements missing');
-        return;
-    }
+    const CSRF_FIELD_NAME = 'csrf_test_name';
+    const CSRF_HEADER     = 'X-CSRF-TOKEN';
 
-    function showAlert(message, type = 'danger') {
+    /* ----------------------------------------------------------
+     | Helpers
+     * --------------------------------------------------------*/
+
+    const getCsrfHash = () => {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    };
+
+    const updateCsrfHash = (hash) => {
+        if (!hash) return;
+
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) meta.setAttribute('content', hash);
+
+        const hidden = form.querySelector(`input[name="${CSRF_FIELD_NAME}"]`);
+        if (hidden) hidden.value = hash;
+    };
+
+    const showAlert = (message, type = 'danger') => {
         alertBox.className = `alert alert-${type}`;
-        alertBox.innerText = message;
         alertBox.classList.remove('d-none');
-    }
+        alertBox.textContent = message;
+    };
 
-    function setLoading(state) {
-        button.disabled = state;
-        spinner.classList.toggle('d-none', !state);
-        btnText.innerText = state
-            ? 'Signing in...'
-            : 'Login';
-    }
+    const hideAlert = () => {
+        alertBox.classList.add('d-none');
+        alertBox.textContent = '';
+    };
+
+    const setLoading = (loading) => {
+        loginBtn.disabled = loading;
+        form.querySelectorAll('input').forEach(i => i.disabled = loading);
+
+        if (loading) {
+            spinner.classList.remove('d-none');
+            btnText.textContent = 'Signing in...';
+        } else {
+            spinner.classList.add('d-none');
+            btnText.textContent = 'Login';
+        }
+    };
+
+    /* ----------------------------------------------------------
+     | Submit handler
+     * --------------------------------------------------------*/
 
     form.addEventListener('submit', async (e) => {
-
         e.preventDefault();
+        hideAlert();
 
-        alertBox.classList.add('d-none');
+        const username = form.username.value.trim();
+        const password = form.password.value;
+
+        if (!username || !password) {
+            showAlert('Username dan password wajib diisi.');
+            return;
+        }
 
         setLoading(true);
 
         try {
+            // Body sebagai application/x-www-form-urlencoded
+            const params = new URLSearchParams();
+            params.append('username', username);
+            params.append('password', password);
+            params.append(CSRF_FIELD_NAME, getCsrfHash());
 
-            const response = await fetch('/login', {
+            const response = await fetch(form.action || window.location.pathname, {
                 method: 'POST',
-                body: new FormData(form),
                 credentials: 'same-origin',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept'          : 'application/json',
+                    'Content-Type'    : 'application/x-www-form-urlencoded',
+                    [CSRF_HEADER]     : getCsrfHash(),
+                },
+                body: params.toString(),
             });
 
-            const result = await response.json();
+            let data = {};
+            try { data = await response.json(); } catch (_) { /* non-JSON */ }
 
-            if (! response.ok) {
+            if (data.csrf && data.csrf.hash) {
+                updateCsrfHash(data.csrf.hash);
+            }
 
-                showAlert(
-                    result.message || 'Login failed'
-                );
+            if (response.ok && data.success) {
+                showAlert(data.message || 'Login berhasil. Mengalihkan...', 'success');
 
-                setLoading(false);
-
+                setTimeout(() => {
+                    window.location.href = data.redirect || '/dashboard';
+                }, 400);
                 return;
             }
 
-            showAlert(
-                'Login success, redirecting...',
-                'success'
-            );
+            showAlert(data.message || 'Login gagal. Silakan coba lagi.');
+            form.password.value = '';
+            form.password.focus();
 
-            setTimeout(() => {
-                window.location.href = result.redirect;
-            }, 600);
-
-        } catch (error) {
-
-            console.error(error);
-
-            showAlert(
-                'Network error'
-            );
-
+        } catch (err) {
+            console.error('[login]', err);
+            showAlert('Tidak dapat terhubung ke server. Periksa koneksi Anda.');
+        } finally {
             setLoading(false);
         }
     });
 
+    /* ----------------------------------------------------------
+     | UX kecil-kecilan
+     * --------------------------------------------------------*/
+
+    ['username', 'password'].forEach((name) => {
+        const el = form.elements[name];
+        if (el) el.addEventListener('input', hideAlert);
+    });
+
+    form.password.addEventListener('keyup', (e) => {
+        if (e.getModifierState && e.getModifierState('CapsLock')) {
+            showAlert('Caps Lock sedang aktif.', 'warning');
+        } else if (alertBox.classList.contains('alert-warning')) {
+            hideAlert();
+        }
+    });
 })();

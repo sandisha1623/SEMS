@@ -16,6 +16,12 @@ class CreateRolesTable extends Migration
                 'auto_increment' => true,
             ],
 
+            'public_id' => [
+                'type'       => 'CHAR',
+                'constraint' => 30,
+                'comment'    => 'rol_<ULID>',
+            ],
+
             'role_name' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 100,
@@ -38,6 +44,7 @@ class CreateRolesTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
+        $this->forge->addUniqueKey('public_id');
         $this->forge->addUniqueKey('role_slug');
 
         $this->forge->createTable('roles');

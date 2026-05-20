@@ -17,7 +17,9 @@ class App extends BaseConfig
      * E.g., http://example.com/
      */
     public string $baseURL = 'http://localhost:8080/';
+    
     public bool $cookieSecure = true;
+    public string $cookieDomain   = '.sems.test';
     public string $cookieSameSite = 'Lax';
     public bool $cookieHTTPOnly = true;
 

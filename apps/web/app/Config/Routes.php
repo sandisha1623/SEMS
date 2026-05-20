@@ -7,23 +7,27 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Home::index');
 $routes->get('dashboard', 'DashboardController::index');
-
-$routes->group('', static function($routes) {
-    $routes->get('/login', 'Auth\\LoginController::index');
+ 
+$routes->group('', static function ($routes) {
+    $routes->get('/login',  'Auth\\LoginController::index');
     $routes->post('/login', 'Auth\\LoginController::attempt');
     $routes->get('/logout', 'Auth\\LoginController::logout');
-    $routes->get('/auth/token', 'Auth\\LoginController::token');
+ 
+    // Endpoint untuk JS ambil JWT (dipakai untuk WebSocket).
+    // Auth pakai session — login dulu, baru bisa akses.
+    $routes->get('/auth/ws-token', 'Auth\\LoginController::wsToken');
 });
 
 /*
  * Generate Password
  *
+ */
  $routes->get('/hash', function () {
     return password_hash(
         'Admin123!',
         PASSWORD_ARGON2ID
     );
-});*/
+});
 
 $routes->group('api', static function ($routes) {
 
