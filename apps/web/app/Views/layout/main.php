@@ -41,5 +41,6 @@
         <script src="<?= base_url('assets/libs/jquery.counterup/jquery.counterup.min.js'); ?>"></script>
         <script src="<?= base_url('assets/libs/feather-icons/feather.min.js'); ?>"></script>
         <script src="<?= base_url('assets/js/app.js') ?>"></script>
+        <?= $this->renderSection('scripts') ?>
     </body>
 </html>

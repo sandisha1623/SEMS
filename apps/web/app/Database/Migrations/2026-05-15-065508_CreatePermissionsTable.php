@@ -17,6 +17,12 @@ class CreatePermissionsTable extends Migration
                 'auto_increment' => true,
             ],
 
+            'public_id' => [
+                'type'       => 'CHAR',
+                'constraint' => 30,
+                'comment'    => 'prm_<ULID>',
+            ],
+
             'permission_key' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 150,
@@ -35,7 +41,7 @@ class CreatePermissionsTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-
+        $this->forge->addUniqueKey('public_id');
         $this->forge->addUniqueKey('permission_key');
 
         $this->forge->createTable('permissions');
