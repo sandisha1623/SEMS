@@ -23,8 +23,10 @@ use App\Libraries\Ulid;
  *       // ...
  *   }
  *
- * Lalu di controller:
- *   $session = $this->examSessionModel->findByPublicId($publicId);
+ * Helper:
+ *   - findByPublicId($publicId)        : cari, return null kalau tidak ada
+ *   - findByPublicIdOr404($publicId)   : cari, throw 404 kalau tidak ada
+ *   - updateByPublicId($publicId, $data) : update dengan placeholder {id} aman
  */
 trait HasPublicId
 {
@@ -48,8 +50,6 @@ trait HasPublicId
 
     /**
      * Cari record berdasarkan public_id (untuk route binding).
-     *
-     * @return array|object|null  Tipe mengikuti $returnType model.
      */
     public function findByPublicId(string $publicId)
     {
@@ -72,5 +72,34 @@ trait HasPublicId
         }
 
         return $row;
+    }
+
+    /**
+     * Update record berdasarkan public_id.
+     *
+     * Otomatis inject `id` ke data supaya placeholder {id} di rule
+     * is_unique[...,id,{id}] ter-resolve dengan benar. Pakai method ini
+     * (bukan ->update()) di controller untuk hindari bug "uniqueness
+     * triggered against itself" dan "No validation rules for placeholder".
+     *
+     *   // Di controller:
+     *   $row = $this->model->findByPublicIdOr404($publicId);
+     *   $ok  = $this->model->updateByPublicId($publicId, $data);
+     *
+     *   if (! $ok) {
+     *       return $this->validationErrorResponse($this->model->errors());
+     *   }
+     */
+    public function updateByPublicId(string $publicId, array $data): bool
+    {
+        $row = $this->findByPublicId($publicId);
+
+        if ($row === null) {
+            return false;
+        }
+
+        $data['id'] = $row[$this->primaryKey];
+
+        return $this->update($row[$this->primaryKey], $data);
     }
 }

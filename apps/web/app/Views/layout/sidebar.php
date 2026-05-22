@@ -28,15 +28,18 @@
                 </li>
                 <li class="menu-title">Menu Utama</li>
                 <li>
-                    <a href="#warga" data-bs-toggle="collapse" data-bs-target="#warga">
+                    <a href="#departemen" data-bs-toggle="collapse" data-bs-target="#departemen">
                         <span class="mdi mdi-account-group-outline fs-16 me-1 ms-1"></span>
-                        <span> Kependudukan </span>
+                        <span> Departemen </span>
                         <span class="menu-arrow"></span>
                     </a>
-                    <div class="collapse" id="warga">
+                    <div class="collapse" id="departemen">
                         <ul class="nav-second-level">
                             <li>
-                                <a class="tp-link" href="#">Daftar Keluarga</a>
+                                <a class="tp-link" href="#">Semua</a>
+                            </li>
+                            <li>
+                                <a class="tp-link" href="#">Tambah Departemen</a>
                             </li>
                         </ul>
                     </div>

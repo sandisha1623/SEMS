@@ -38,14 +38,19 @@ class AuthService
 
         $token = $this->jwt->generate($user);
 
+        // Load permissions yang ter-assign ke role user ini.
+        // Tanpa ini, semua check `hasPermission()` akan return false.
+        $permissions = $this->loadPermissionsForRole((int) $user['role_id']);
+
         session()->set([
             'logged_in' => true,
             'user' => [
-                'id'        => $user['id'],
-                'public_id' => $user['public_id'],
-                'username'  => $user['username'],
-                'email'     => $user['email'],
-                'role'      => $user['role_slug'],
+                'id'            => $user['id'],
+                'public_id'     => $user['public_id'],
+                'username'      => $user['username'],
+                'email'         => $user['email'],
+                'role'          => $user['role_slug'],
+                'permissions'   => $permissions,
             ],
         ]);
 
@@ -79,6 +84,22 @@ class AuthService
         $this->setAuthCookie('', -1);
 
         session()->destroy();
+    }
+
+    /**
+     * Ambil semua permission_key yang dimiliki oleh role.
+     */
+    protected function loadPermissionsForRole(int $roleId): array
+    {
+        $rows = db_connect()
+            ->table('role_permissions')
+            ->select('permissions.permission_key')
+            ->join('permissions', 'permissions.id = role_permissions.permission_id')
+            ->where('role_permissions.role_id', $roleId)
+            ->get()
+            ->getResultArray();
+ 
+        return array_column($rows, 'permission_key');
     }
 
     /**

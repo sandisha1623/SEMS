@@ -46,6 +46,7 @@ class Ulid
         'usr' => 'users',
         'rol' => 'roles',
         'prm' => 'permissions',
+        'dpt' => 'departments',
         'exm' => 'exam_sessions',
         'par' => 'exam_participants',
         'frf' => 'face_references',
@@ -160,7 +161,6 @@ class Ulid
         }
 
         $out = '';
-
         for ($i = $length - 1; $i >= 0; $i--) {
             $mod = $ms % 32;
             $out = self::ALPHABET[$mod] . $out;

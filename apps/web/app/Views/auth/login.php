@@ -34,7 +34,7 @@
                                         <div class="mb-0 border-0 p-md-5 p-lg-0 p-4">
                                             <div class="auth-title-section mb-3 text-left"> 
                                                 <h3 class="text-dark fs-20 fw-medium mb-2">Selamat datang</h3>
-                                                <p class="text-dark text-capitalize fs-14 mb-0">Silakan masuk ke akun Anda</p>
+                                                <p class="text-dark text-capitalize fs-14 mb-0">Sistem Pengawasan Ujian (SEMS). Silakan masuk dengan akun Anda.</p>
                                             </div>
                                             <div class="pt-0">
                                                 <?php if(session()->getFlashdata('error')): ?>
@@ -78,7 +78,7 @@
                                                             <div class="d-grid">
                                                                 <button id="loginBtn" class="btn btn-primary btn-login">
                                                                     <span id="loginSpinner" class="spinner-border spinner-border-sm btn-spinner" aria-hidden="true" hidden></span>
-                                                                    <span class="btn-text">Masuk ke Dashboard</span>
+                                                                    <span class="btn-text">Masuk</span>
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -93,8 +93,8 @@
                                                 <a class='auth-logo mb-2' href='/silva/html/'>
                                                     <img src="assets/images/small-logo.png" alt="logo-dark" class="img-responsive" width="85" height="27" />
                                                 </a>
-                                                <span class="fs-14 text-white">The Intelligence behind Integrity.</span>
-                                                <span class="fs-14 text-white mb-5 pb-5">Sistem Deteksi Kecurangan Ujian Berbasis AI</span>
+                                                <span class="fs-16 text-white">The Intelligence behind Integrity.</span>
+                                                <span class="fs-16 text-white mb-5 pb-5">Sistem Deteksi Kecurangan Ujian Berbasis AI</span>
                                                 <div class="d-flex flex-column overlay mt-5 p-3 text-white border rounded-2">
                                                     <span class="mb-0"><i class="mdi mdi-shield-check-outline"></i> SECURE ENVIRONMENT</span>
                                                     <span class="mb-0">Sistem ini memonitor aktivitas secara real-time untuk memastikan standar integritas akademik tertinggi di setiap sesi ujian.</span>

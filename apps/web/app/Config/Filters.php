@@ -43,6 +43,10 @@ class Filters extends BaseFilters
         'throttle'         => \App\Filters\ThrottleFilter::class,
         'login-throttle'   => \App\Filters\LoginThrottleFilter::class,
         'jwt'              => \App\Filters\JwtAuthFilter::class,
+
+        // Web filters (redirect on failure, bukan JSON error)
+        'web-auth'         => \App\Filters\WebAuthFilter::class,
+        'web-permission'   => \App\Filters\WebPermissionFilter::class,
     ];
 
     /**

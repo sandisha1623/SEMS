@@ -64,6 +64,30 @@
     };
 
     /* ----------------------------------------------------------
+     | Toggle password visibility
+     * --------------------------------------------------------*/
+
+    const togglePw = document.getElementById('togglePw');
+    const passwordInput = document.getElementById('password');
+
+    if (togglePw && passwordInput) {
+        togglePw.addEventListener('click', () => {
+            const icon = togglePw.querySelector('.mdi');
+
+            const isPassword = passwordInput.type === 'password';
+
+            passwordInput.type = isPassword ? 'text' : 'password';
+
+            // Ganti icon
+            icon.classList.toggle('mdi-eye-outline', !isPassword);
+            icon.classList.toggle('mdi-eye-off-outline', isPassword);
+
+            // Fokus kembali ke input tanpa select text
+            passwordInput.focus({ preventScroll: true });
+        });
+    }
+
+    /* ----------------------------------------------------------
      | Submit handler
      * --------------------------------------------------------*/
 

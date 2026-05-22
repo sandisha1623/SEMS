@@ -32,6 +32,10 @@ class UserModel extends Model
     protected $beforeInsert = ['setPublicIdBeforeInsert'];
 
     protected $validationRules = [
+        // 'id' wajib didefinisikan karena dipakai sebagai placeholder
+        // di rule is_unique[...,id,{id}]. Sejak CI4 4.3.5, placeholder
+        // tanpa rule akan throw LogicException.
+        'id'       => 'permit_empty|is_natural_no_zero',
         'username' => 'required|min_length[3]|max_length[50]|is_unique[users.username,id,{id}]',
         'email'    => 'required|valid_email|is_unique[users.email,id,{id}]',
         'role_id'  => 'required|integer',
