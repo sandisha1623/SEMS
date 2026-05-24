@@ -54,10 +54,28 @@ class ExamSessionController extends BaseController
             );
         }
 
+        // Tentukan redirect berdasarkan action tombol yang di-click.
+        // Default ke 'manage_participants' (primary button) supaya
+        // alur kerja paling umum di-default-kan.
+        $action = $this->request->getPost('_action') ?: 'manage_participants';
+
+        if ($action === 'list') {
+            $redirect = '/exam-sessions';
+            $message  = 'Exam session berhasil dibuat.';
+        } else {
+            // Cari row yang baru dibuat (untuk ambil public_id)
+            $newSession = $this->model
+                ->where('code', $data['code'])
+                ->first();
+
+            $redirect = '/exam-sessions/' . $newSession['public_id'] . '/participants';
+            $message  = 'Exam session berhasil dibuat. Lanjut atur peserta.';
+        }
+
         return $this->response->setJSON([
             'success'  => true,
-            'message'  => 'Exam session berhasil dibuat.',
-            'redirect' => '/exam-sessions',
+            'message'  => $message,
+            'redirect' => $redirect,
             'csrf'     => $this->csrfMeta(),
         ]);
     }
@@ -130,9 +148,6 @@ class ExamSessionController extends BaseController
         $startsAt = (string) $this->request->getPost('starts_at');
         $duration = (int) $this->request->getPost('duration_minutes');
 
-        // ends_at SELALU dihitung dari starts_at + duration.
-        // Tidak ada field manual override (sengaja, untuk hindari
-        // inkonsistensi data: duration berubah, ends_at tertinggal).
         $endsAt = '';
         if ($startsAt !== '' && $duration > 0) {
             $endsAt = date(
@@ -209,10 +224,6 @@ class ExamSessionController extends BaseController
             'completed'      => $this->model->where('status', 'completed')->countAllResults(),
         ];
     }
-
-    /* ----------------------------------------------------------
-     | Response helpers
-     * --------------------------------------------------------*/
 
     protected function validationErrorResponse(array $errors)
     {

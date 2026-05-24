@@ -1,27 +1,32 @@
 <?php
 /**
- * Shared form partial — dipakai create.php dan edit.php.
+ * Shared form partial untuk create & edit exam session.
  *
- * Catatan: ends_at TIDAK ADA sebagai field input.
- * Server selalu menghitung ends_at = starts_at + duration_minutes.
- * Ini mencegah inkonsistensi data (mis. user ubah duration tapi
- * lupa update ends_at).
+ * Bottom action bar:
+ *   - Create mode: 2 tombol Save (primary = "Save & Manage Participants",
+ *                  secondary = "Save & Return to List")
+ *   - Edit mode:   1 tombol "Update Session" (redirect ke list)
+ *
+ * Field code:
+ *   - Create mode: auto-generated dari title/dept/date sampai user manual edit
+ *   - Edit mode:   preserve nilai existing; user bisa klik "Regenerate" untuk
+ *                  trigger ulang auto-gen kalau title/dept/date diubah
  */
-$settings = $session['settings'] ?? [];
+$settings    = $session['settings'] ?? [];
 $sensitivity = $settings['alert_sensitivity'] ?? 'medium';
+$isEdit      = ! empty($session['public_id']);
 ?>
 <?= csrf_field() ?>
+
+<input type="hidden" name="_action" id="formAction" value="manage_participants">
 
 <div id="alertBox" class="alert d-none"></div>
 
 <div class="row g-4">
 
-    <!-- ====================================================== -->
-    <!-- LEFT COLUMN — Core Configuration + Advanced            -->
-    <!-- ====================================================== -->
     <div class="col-lg-8">
 
-        <!-- Core Configuration card -->
+        <!-- Core Configuration -->
         <div class="card mb-3">
             <div class="card-body">
                 <h5 class="mb-3">
@@ -100,29 +105,41 @@ $sensitivity = $settings['alert_sensitivity'] ?? 'medium';
                            class="ms-2 text-decoration-none small text-primary">
                             <i class="mdi mdi-pencil"></i> Edit
                         </a>
+                        <?php if ($isEdit): ?>
+                            <a href="javascript:void(0)" id="regenerateCode"
+                               class="ms-2 text-decoration-none small text-primary"
+                               title="Regenerate code dari values terbaru">
+                                <i class="mdi mdi-refresh"></i> Regenerate
+                            </a>
+                        <?php endif; ?>
                     </label>
                     <input type="text" name="code" id="examCode" class="form-control"
                            value="<?= esc($session['code']) ?>"
                            placeholder="Auto-generated dari title"
                            readonly required>
                     <small class="text-muted">
-                        Otomatis dibuat dari title + tanggal. Klik "Edit" untuk override manual.
+                        <?php if ($isEdit): ?>
+                            Code tidak otomatis berubah saat edit. Klik <strong>Regenerate</strong>
+                            kalau Anda ingin update setelah ubah title/department.
+                        <?php else: ?>
+                            Otomatis dibuat dari title + tanggal. Klik <strong>Edit</strong> untuk override manual.
+                        <?php endif; ?>
                     </small>
                 </div>
 
             </div>
         </div>
 
-        <!-- Advanced (collapsed) card -->
+        <!-- Advanced -->
         <div class="card mb-3">
             <div class="card-header bg-white py-3" style="cursor: pointer;"
                  data-bs-toggle="collapse" data-bs-target="#advancedSection"
                  aria-expanded="false">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
+                    <h6 class="mb-0">
                         <i class="mdi mdi-tune text-muted me-2"></i>
                         Advanced Options
-                    </h5>
+                    </h6>
                     <i class="mdi mdi-chevron-down"></i>
                 </div>
             </div>
@@ -169,39 +186,49 @@ $sensitivity = $settings['alert_sensitivity'] ?? 'medium';
             </div>
         </div>
 
-        <!-- Participant Management placeholder -->
-        <div class="card">
-            <div class="card-body">
-                <h5 class="mb-3">
-                    <i class="mdi mdi-account-multiple-outline text-primary me-2"></i>
-                    Participant Management
-                </h5>
-
-                <div class="border border-2 border-dashed rounded p-5 text-center text-muted"
-                     style="border-color: #d1d5db !important;">
-                    <i class="mdi mdi-upload fs-1 d-block mb-2"></i>
-                    <p class="mb-1 fw-medium">Upload Student Roster</p>
-                    <p class="small mb-3">Drag and drop CSV or XLSX files here</p>
-                    <button type="button" class="btn btn-light btn-sm" disabled>
-                        <i class="mdi mdi-folder-open-outline me-1"></i> Select File
-                    </button>
-                </div>
-
-                <div class="alert alert-info mt-3 mb-0 d-flex align-items-start">
-                    <i class="mdi mdi-information-outline me-2 fs-5"></i>
-                    <div class="small flex-grow-1">
-                        <strong>Available di Step 4.</strong>
-                        Untuk sekarang, peserta dapat di-enroll setelah sesi disimpan.
+        <!-- Participant Management -->
+        <?php if ($isEdit): ?>
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div style="width: 48px; height: 48px; border-radius: 10px; background: #eef2ff; color: #4f46e5; display: flex; align-items: center; justify-content: center;">
+                                <i class="mdi mdi-account-multiple-outline fs-3"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">Participant Management</h6>
+                            <small class="text-muted">
+                                Enroll mahasiswa, atur status, lihat verification result.
+                            </small>
+                        </div>
+                        <a href="<?= base_url('exam-sessions/' . $session['public_id'] . '/participants') ?>"
+                           class="btn btn-primary">
+                            Manage <i class="mdi mdi-arrow-right ms-1"></i>
+                        </a>
                     </div>
                 </div>
             </div>
-        </div>
+        <?php else: ?>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3">
+                        <i class="mdi mdi-account-multiple-outline text-primary me-2"></i>
+                        Participant Management
+                    </h5>
+
+                    <div class="alert alert-info mb-0 d-flex align-items-start">
+                        <i class="mdi mdi-information-outline me-2 fs-5"></i>
+                        <div class="small flex-grow-1">
+                            Simpan sesi terlebih dahulu, lalu enroll peserta dari halaman yang akan terbuka.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
 
     </div>
 
-    <!-- ====================================================== -->
-    <!-- RIGHT COLUMN — Security Integrity                       -->
-    <!-- ====================================================== -->
     <div class="col-lg-4">
 
         <div class="card mb-3">
@@ -227,26 +254,10 @@ $sensitivity = $settings['alert_sensitivity'] ?? 'medium';
 
                 <?php
                 $toggles = [
-                    'face_recognition' => [
-                        'label'   => 'Face Recognition',
-                        'caption' => 'Identity verification',
-                        'icon'    => 'face-recognition',
-                    ],
-                    'gaze_tracking' => [
-                        'label'   => 'Gaze Tracking',
-                        'caption' => 'Monitor off-screen focus',
-                        'icon'    => 'eye-outline',
-                    ],
-                    'browser_lockdown' => [
-                        'label'   => 'Browser Lockdown',
-                        'caption' => 'Force full-screen mode',
-                        'icon'    => 'monitor-lock',
-                    ],
-                    'object_detection' => [
-                        'label'   => 'Object Detection',
-                        'caption' => 'Phones, books, etc.',
-                        'icon'    => 'cellphone-screenshot',
-                    ],
+                    'face_recognition' => ['label' => 'Face Recognition', 'caption' => 'Identity verification', 'icon' => 'face-recognition'],
+                    'gaze_tracking'    => ['label' => 'Gaze Tracking',    'caption' => 'Monitor off-screen focus', 'icon' => 'eye-outline'],
+                    'browser_lockdown' => ['label' => 'Browser Lockdown', 'caption' => 'Force full-screen mode',  'icon' => 'monitor-lock'],
+                    'object_detection' => ['label' => 'Object Detection', 'caption' => 'Phones, books, etc.',     'icon' => 'cellphone-screenshot'],
                 ];
                 ?>
 
@@ -301,11 +312,23 @@ $sensitivity = $settings['alert_sensitivity'] ?? 'medium';
 </div>
 
 <div class="d-flex justify-content-end gap-2 mt-4">
-    <a href="<?= base_url('exam-sessions') ?>" class="btn btn-light px-4">Discard Draft</a>
-    <button type="submit" class="btn btn-primary px-4" id="submitBtn">
-        <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
-        <span class="btn-text">
-            <?= empty($session['public_id']) ? 'Initialize Session' : 'Update Session' ?>
-        </span>
-    </button>
+    <a href="<?= base_url('exam-sessions') ?>" class="btn btn-light px-4">
+        Discard
+    </a>
+
+    <?php if ($isEdit): ?>
+        <button type="submit" class="btn btn-primary px-4" id="submitBtn" data-action="list">
+            <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+            <span class="btn-text">Update Session</span>
+        </button>
+    <?php else: ?>
+        <button type="submit" class="btn btn-outline-primary px-4" id="submitBtnList" data-action="list">
+            <span class="spinner-border spinner-border-sm d-none submit-spinner" aria-hidden="true"></span>
+            Save &amp; Return to List
+        </button>
+        <button type="submit" class="btn btn-primary px-4" id="submitBtn" data-action="manage_participants">
+            <span id="submitSpinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+            <span class="btn-text">Save &amp; Manage Participants</span>
+        </button>
+    <?php endif; ?>
 </div>

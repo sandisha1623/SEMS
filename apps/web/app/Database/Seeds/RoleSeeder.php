@@ -15,6 +15,7 @@ class RoleSeeder extends Seeder
             ['role_name' => 'Operator CCTV',    'role_slug' => 'operator-cctv'],
             ['role_name' => 'Analyst',          'role_slug' => 'analyst'],
             ['role_name' => 'Viewer',           'role_slug' => 'viewer'],
+            ['role_name' => 'Student',          'role_slug' => 'student'],
         ];
 
         // Tambahkan public_id ULID untuk tiap row.

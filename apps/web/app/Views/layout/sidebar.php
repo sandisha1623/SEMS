@@ -2,48 +2,79 @@
     <div class="h-100" data-simplebar>
         <div id="sidebar-menu">
             <div class="logo-box">
-                <a class='logo logo-light' href='/silva/html/'>
+                <a class='logo logo-light' href='<?= base_url('dashboard') ?>'>
                     <span class="logo-sm">
-                        <img src="assets/images/logo.svg" alt="" height="22">
+                        <img src="<?= base_url('assets/images/logo.svg') ?>" alt="" height="22">
                     </span>
                     <span class="logo-lg">
-                        <img src="assets/images/logo.svg" alt="" height="24">
+                        <img src="<?= base_url('assets/images/logo.svg') ?>" alt="" height="24">
                     </span>
                 </a>
-                <a class='logo logo-dark' href='/silva/html/'>
+                <a class='logo logo-dark' href='<?= base_url('dashboard') ?>'>
                     <span class="logo-sm">
-                        <img src="assets/images/logo.svg" alt="" height="22">
+                        <img src="<?= base_url('assets/images/logo.svg') ?>" alt="" height="22">
                     </span>
                     <span class="logo-lg">
-                        <img src="assets/images/logo.svg" alt="logo" width="200" height="56">
+                        <img src="<?= base_url('assets/images/logo.svg') ?>" alt="logo" width="200" height="56">
                     </span>
                 </a>
             </div>
+
+            <?php
+                $currentPath = service('request')->getUri()->getPath();
+                $isActive    = fn ($prefix) => str_starts_with($currentPath, $prefix) ? 'active' : '';
+                $auth        = service('auth');
+            ?>
+
             <ul id="side-menu">
+                <li class="menu-title">Main</li>
+
                 <li>
-                    <a href="#">
+                    <a href="<?= base_url('dashboard') ?>" class="<?= $isActive('/dashboard') ?>">
                         <i data-feather="home"></i>
-                        <span> Dashboard </span>
+                        <span>Dashboard</span>
                     </a>
                 </li>
-                <li class="menu-title">Menu Utama</li>
+
+                <?php if ($auth->hasPermission('exam.manage')): ?>
+                <li class="menu-title">Exam Management</li>
+
                 <li>
-                    <a href="#departemen" data-bs-toggle="collapse" data-bs-target="#departemen">
-                        <span class="mdi mdi-account-group-outline fs-16 me-1 ms-1"></span>
-                        <span> Departemen </span>
-                        <span class="menu-arrow"></span>
+                    <a href="<?= base_url('exam-sessions') ?>" class="<?= $isActive('/exam-sessions') ?>">
+                        <span class="mdi mdi-clipboard-text-clock fs-16 me-1 ms-1"></span>
+                        <span>Exam Sessions</span>
                     </a>
-                    <div class="collapse" id="departemen">
-                        <ul class="nav-second-level">
-                            <li>
-                                <a class="tp-link" href="#">Semua</a>
-                            </li>
-                            <li>
-                                <a class="tp-link" href="#">Tambah Departemen</a>
-                            </li>
-                        </ul>
-                    </div>
                 </li>
+                <?php endif; ?>
+
+                <?php
+                $hasUsersManage    = $auth->hasPermission('users.manage');
+                $hasSettingsManage = $auth->hasPermission('settings.manage');
+                ?>
+
+                <?php if ($hasUsersManage || $hasSettingsManage): ?>
+                <li class="menu-title">Master Data</li>
+
+                <?php if ($hasUsersManage): ?>
+                <li>
+                    <a href="<?= base_url('users') ?>" class="<?= $isActive('/users') ?>">
+                        <span class="mdi mdi-account-multiple fs-16 me-1 ms-1"></span>
+                        <span>Users</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+
+                <?php if ($hasSettingsManage): ?>
+                <li>
+                    <a href="<?= base_url('departments') ?>" class="<?= $isActive('/departments') ?>">
+                        <span class="mdi mdi-domain fs-16 me-1 ms-1"></span>
+                        <span>Departments</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+
+                <?php endif; ?>
+
             </ul>
         </div>
         <div class="clearfix"></div>

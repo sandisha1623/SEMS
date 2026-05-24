@@ -25,11 +25,15 @@ class PermissionSeeder extends Seeder
             'settings.manage',
             'ai.manage',
 
-            // Permissions untuk exam domain (Phase 1 SEMS)
-            'exam.manage',       // CRUD exam sessions (admin)
-            'exam.participate',  // Ikut ujian (mahasiswa)
-            'exam.monitor',      // Awasi ujian live (pengawas)
-            'exam.review',       // Review violation & evidence
+            // Exam domain (Phase 1)
+            'exam.manage',
+            'exam.participate',
+            'exam.monitor',
+            'exam.review',
+
+            // Face reference — granular permissions
+            'face-reference.manage',     // admin: upload/approve/reject/archive
+            'face-reference.upload-own', // student: upload foto sendiri
         ];
 
         $rows = array_map(static fn (string $key): array => [

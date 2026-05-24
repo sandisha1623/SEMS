@@ -19,8 +19,7 @@ class RolePermissionSeeder extends Seeder
         foreach ($roles as $role) {
             $rolePermissions = $this->permissionsFor(
                 $role->role_slug,
-                $permissionMap,
-                $permissions
+                $permissionMap
             );
 
             if (! empty($rolePermissions)) {
@@ -39,10 +38,14 @@ class RolePermissionSeeder extends Seeder
 
     /**
      * Mapping role → permission keys.
+     *
+     * Catatan perubahan vs sebelumnya:
+     *   - viewer: HAPUS exam.participate (sekarang punya student)
+     *   - student (baru): exam.participate + face-reference.upload-own
+     *   - admin-validator + super-admin: tambah face-reference.manage
      */
-    private function permissionsFor(string $roleSlug, array $map, array $allPermissions): array
+    private function permissionsFor(string $roleSlug, array $map): array
     {
-        // Super admin = semua
         if ($roleSlug === 'super-admin') {
             return array_values($map);
         }
@@ -53,6 +56,8 @@ class RolePermissionSeeder extends Seeder
                 'detection.view', 'detection.validate', 'detection.reject',
                 'report.generate', 'report.download',
                 'exam.manage', 'exam.review',
+                'face-reference.manage',
+                'users.manage',
             ],
             'operator-cctv' => [
                 'dashboard.view',
@@ -61,14 +66,21 @@ class RolePermissionSeeder extends Seeder
                 'exam.monitor',
             ],
             'analyst' => [
-                'dashboard.view', 'analytics.view', 'analytics.export',
+                'dashboard.view',
+                'analytics.view', 'analytics.export',
                 'detection.view',
                 'report.generate', 'report.download',
                 'exam.review',
             ],
             'viewer' => [
-                'dashboard.view', 'analytics.view', 'detection.view',
+                'dashboard.view',
+                'analytics.view',
+                'detection.view',
+            ],
+            'student' => [
+                'dashboard.view',
                 'exam.participate',
+                'face-reference.upload-own',
             ],
             default => [],
         };

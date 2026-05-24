@@ -1,10 +1,13 @@
 /**
  * SEMS — Exam Session form (create & edit)
  *
- * Features:
- * - Auto-generate code dari title + dept + starts_at
- * - Live preview "Selesai pada" dari starts_at + duration
- * - Form submit dengan CSRF refresh + validation errors inline
+ * Code field behavior:
+ * - Create mode: empty → auto-generate dari title/dept/date. User bisa
+ *   override via "Edit" toggle. Setelah override, auto-gen disabled.
+ *
+ * - Edit mode: code sudah ada value dari DB. Auto-regenerate JANGAN
+ *   jalan otomatis (admin mungkin sengaja punya code custom). User bisa
+ *   pencet "Regenerate" untuk minta auto-gen ulang dari values terbaru.
  */
 (() => {
     'use strict';
@@ -12,13 +15,15 @@
     const form = document.getElementById('examSessionForm');
     if (!form) return;
 
-    const submitBtn = document.getElementById('submitBtn');
-    const spinner   = document.getElementById('submitSpinner');
-    const btnText   = submitBtn?.querySelector('.btn-text');
-    const alertBox  = document.getElementById('alertBox');
+    const isEditMode = form.action.includes('/update');
 
-    const CSRF_FIELD_NAME = 'csrf_test_name';
-    const CSRF_HEADER     = 'X-CSRF-TOKEN';
+    const submitBtn      = document.getElementById('submitBtn');
+    const spinner        = document.getElementById('submitSpinner');
+    const btnText        = submitBtn?.querySelector('.btn-text');
+    const submitBtnList  = document.getElementById('submitBtnList');
+    const actionField    = document.getElementById('formAction');
+
+    const alertBox       = document.getElementById('alertBox');
 
     const titleInput      = document.getElementById('examTitle');
     const departmentInput = document.getElementById('examDepartment');
@@ -26,11 +31,34 @@
     const durationInput   = document.getElementById('examDuration');
     const codeInput       = document.getElementById('examCode');
     const codeEditToggle  = document.getElementById('toggleCodeEdit');
+    const codeRegenerate  = document.getElementById('regenerateCode');
     const endsAtPreview   = document.getElementById('endsAtPreview');
 
-    let codeWasManuallyEdited = codeInput.value.trim() !== '';
+    const CSRF_FIELD_NAME = 'csrf_test_name';
+    const CSRF_HEADER     = 'X-CSRF-TOKEN';
 
-    /* ---------- Code auto-generator ---------- */
+    /* ---------- Auto-gen state ---------- *
+     * Di create mode: auto-gen aktif sampai user manual edit code
+     * Di edit mode:   auto-gen non-aktif by default (preserve existing code).
+     *                 User klik "Regenerate" untuk explicit refresh.
+     */
+    let autoGenEnabled = !isEditMode;
+
+    /* ---------- Dual button handler ---------- */
+
+    let clickedAction = 'manage_participants';
+
+    submitBtn?.addEventListener('click', () => {
+        clickedAction = submitBtn.dataset.action || 'manage_participants';
+        if (actionField) actionField.value = clickedAction;
+    });
+
+    submitBtnList?.addEventListener('click', () => {
+        clickedAction = submitBtnList.dataset.action || 'list';
+        if (actionField) actionField.value = clickedAction;
+    });
+
+    /* ---------- Code generator ---------- */
 
     const generateCode = () => {
         const title    = titleInput.value.trim();
@@ -79,8 +107,8 @@
         return [titlePrefix, deptPart, datePart].filter(Boolean).join('-');
     };
 
-    const updateCodeIfAuto = () => {
-        if (codeWasManuallyEdited) return;
+    const tryAutoGenerate = () => {
+        if (!autoGenEnabled) return;
         codeInput.value = generateCode();
     };
 
@@ -119,11 +147,11 @@
 
     [titleInput, departmentInput, startsAtInput].forEach(el => {
         el.addEventListener('input',  () => {
-            updateCodeIfAuto();
+            tryAutoGenerate();
             updateEndsAtPreview();
         });
         el.addEventListener('change', () => {
-            updateCodeIfAuto();
+            tryAutoGenerate();
             updateEndsAtPreview();
         });
     });
@@ -131,23 +159,47 @@
     durationInput.addEventListener('input',  updateEndsAtPreview);
     durationInput.addEventListener('change', updateEndsAtPreview);
 
+    // Toggle Edit/Lock code field
     codeEditToggle?.addEventListener('click', () => {
         if (codeInput.readOnly) {
+            // Unlock untuk manual edit
             codeInput.readOnly = false;
             codeInput.focus();
             codeEditToggle.innerHTML = '<i class="mdi mdi-lock-outline"></i> Lock';
-            codeWasManuallyEdited = true;
+            // Manual edit aktif → disable auto-gen
+            autoGenEnabled = false;
         } else {
+            // Lock kembali
             codeInput.readOnly = true;
             codeEditToggle.innerHTML = '<i class="mdi mdi-pencil"></i> Edit';
-            codeWasManuallyEdited = false;
-            updateCodeIfAuto();
+            // Di create mode, lock berarti kembali ke auto-gen.
+            // Di edit mode, tetap non-aktif (admin sudah pernah commit ke nilai DB).
+            if (!isEditMode) {
+                autoGenEnabled = true;
+                tryAutoGenerate();
+            }
+        }
+    });
+
+    // Tombol Regenerate (terutama untuk edit mode)
+    codeRegenerate?.addEventListener('click', () => {
+        const newCode = generateCode();
+        if (!newCode) {
+            return;
+        }
+        const proceed = confirm(
+            `Code akan di-regenerate menjadi "${newCode}".\n` +
+            `Code lama: "${codeInput.value}"\n\n` +
+            'Lanjutkan?'
+        );
+        if (proceed) {
+            codeInput.value = newCode;
         }
     });
 
     // Initial state
-    if (! codeInput.value.trim()) {
-        updateCodeIfAuto();
+    if (!isEditMode && !codeInput.value.trim()) {
+        tryAutoGenerate();
     }
     updateEndsAtPreview();
 
@@ -217,11 +269,21 @@
     };
 
     const setLoading = (loading) => {
-        submitBtn.disabled = loading;
+        [submitBtn, submitBtnList].forEach(btn => {
+            if (btn) btn.disabled = loading;
+        });
+
         if (spinner) spinner.classList.toggle('d-none', !loading);
-        if (btnText) btnText.textContent = loading
-            ? 'Saving...'
-            : (form.action.includes('/update') ? 'Update Session' : 'Initialize Session');
+
+        submitBtnList?.querySelectorAll('.submit-spinner').forEach(s => {
+            s.classList.toggle('d-none', !loading);
+        });
+
+        if (btnText && !loading) {
+            btnText.textContent = isEditMode ? 'Update Session' : 'Save & Manage Participants';
+        } else if (btnText && loading) {
+            btnText.textContent = 'Saving...';
+        }
     };
 
     /* ---------- Submit ---------- */

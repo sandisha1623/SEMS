@@ -31,11 +31,6 @@ class DepartmentModel extends Model
     protected $beforeInsert = ['setPublicIdBeforeInsert'];
 
     protected $validationRules = [
-        // 'id' rule diperlukan supaya placeholder {id} di rule lain
-        // (is_unique[...,id,{id}]) bisa ter-resolve. Sejak CI4 4.3.5,
-        // setiap field yang dipakai sebagai placeholder WAJIB punya
-        // rule sendiri — kalau tidak, error LogicException.
-        // permit_empty supaya tidak required saat insert.
         'id'        => 'permit_empty|is_natural_no_zero',
         'name'      => 'required|max_length[150]|is_unique[departments.name,id,{id}]',
         'code'      => 'required|max_length[20]|is_unique[departments.code,id,{id}]',
@@ -61,20 +56,26 @@ class DepartmentModel extends Model
         return array_column($rows, 'name', 'id');
     }
 
+    /**
+     * Aggregate stats untuk panel atas halaman list.
+     *
+     * Sekarang students_total dihitung live dari UserModel
+     * (sebelumnya placeholder null).
+     */
     public function summary(): array
     {
-        $db = $this->db;
-
         $totalDepartments = $this->where('is_active', 1)->countAllResults();
 
-        $activeExams = $db->table('exam_sessions')
+        $activeExams = $this->db->table('exam_sessions')
             ->where('status', 'ongoing')
             ->where('deleted_at', null)
             ->countAllResults();
 
+        $studentsTotal = (new UserModel())->totalStudents();
+
         return [
             'total_departments' => $totalDepartments,
-            'students_total'    => null,
+            'students_total'    => $studentsTotal,
             'active_exams'      => $activeExams,
         ];
     }
